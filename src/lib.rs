@@ -1,8 +1,67 @@
+//! This crate provides a toggle manager that can load from a file.
+//! Toggle states are read-only and accessed in O(1) time.
+//! There's a direct relationship where each string name corresponds to a unique name in the enum.
+//!
+//! # Example
+//!
+//! - File `toggles.txt` conains:
+//! ```txt
+//! 0 FeatureA
+//! 1 FeatureB
+//! ```
+//!
+//! - Basic usage
+//! ```rust
+//! use enum_toggles::EnumToggles;
+//! use strum_macros::{AsRefStr, EnumIter};
+//!
+//! #[derive(AsRefStr, EnumIter, PartialEq, Copy, Clone, Debug)]
+//! pub enum MyToggle {
+//!     FeatureA,
+//!     FeatureB,
+//! }
+//!
+//! let mut toggles = EnumToggles::<MyToggle>::new();
+//! toggles.set_enum(MyToggle::FeatureA, true);
+//! toggles.set_by_name("FeatureB", true); // Mapped to MyToggle::FeatureB
+//! toggles.load_from_file("toggles.txt"); // Load toggles state from file
+//! println!("{}", toggles);
+//! ```
+//!
+//! - With concucrency context
+//! ```rust
+//! use once_cell::sync::Lazy;
+//! use std::env;
+//! use log::{warn};
+//!
+//! #[derive(AsRefStr, EnumIter, PartialEq, Copy, Clone, Debug)]
+//! pub enum MyToggle {
+//!     FeatureA,
+//!     FeatureB,
+//! }
+//!
+//! pub static TOGGLES: Lazy<Toggles<EnumToggle>> = Lazy::new(|| {
+//!     let mut toggle = Toggles::new();
+//!     let filepath = env::var("TOGGLES_FILE");
+//!     match filepath {
+//!         Ok(path) => {
+//!             if !path.is_empty() {
+//!                 toggle.load_from_file(&path)
+//!             }
+//!         }
+//!         Err(_) => warn!("Environment variable TOGGLES_FILE not set"),
+//!     }
+//!     toggle
+//! });
+//! ```
+//!
+
 use bitvec::prelude::*;
 use log::error;
 use std::io::BufRead;
 use std::{collections::HashMap, fmt};
 
+/// Contains the toggle value for each item of the enum T.
 pub struct EnumToggles<T> {
     toggles_value: BitVec,
     _marker: std::marker::PhantomData<T>,
@@ -19,10 +78,15 @@ where
         }
     }
 }
+
+/// Handle the toggle value of an enum T.
 impl<T> EnumToggles<T>
 where
     T: strum::IntoEnumIterator + AsRef<str> + PartialEq + 'static,
 {
+    /// Create a new instance of `EnumToggles` with all toggles set to false.
+    ///
+    /// This operation is *O*(*n*).
     pub fn new() -> Self {
         let mut toggles: EnumToggles<T> = EnumToggles {
             toggles_value: bitvec![0; T::iter().count()],
@@ -32,6 +96,7 @@ where
         toggles
     }
 
+    /// Set all toggles value defiend in the file.
     pub fn load_from_file(&mut self, filepath: &str) {
         let file = std::fs::File::open(filepath).expect("Unable to open file");
         let reader = std::io::BufReader::new(file);
@@ -52,6 +117,9 @@ where
         }
     }
 
+    /// Set the bool value of all toggles based on a HashMap.
+    ///
+    /// This operation is *O*(*n²*).
     pub fn set_all(&mut self, init: HashMap<String, bool>) {
         self.toggles_value.fill(false);
         for toggle in T::iter() {
@@ -63,6 +131,9 @@ where
         }
     }
 
+    /// Set the bool value of a toggle by its name.
+    ///
+    /// This operation is *O*(*n*).
     fn set_by_name(&mut self, toggle_name: &str, value: bool) {
         if let Some(toggle) = T::iter().find(|t| toggle_name == t.as_ref()) {
             if let Some(toggle_id) = T::iter().position(|x| x == toggle) {
@@ -71,15 +142,22 @@ where
         }
     }
 
+    /// Set the bool value of a toggle by toggle id.
+    ///
+    /// This operation is *O*(*1*).
     pub fn set(&mut self, toggle_id: usize, value: bool) {
         self.toggles_value.set(toggle_id, value);
     }
 
+    /// Get the bool value of a toggle by toggle id.
+    ///
+    /// This operation is *O*(*1*).
     pub fn get(&self, toggle_id: usize) -> bool {
         self.toggles_value[toggle_id]
     }
 }
 
+/// Diplay all toggles and their values.
 impl<T> fmt::Display for EnumToggles<T>
 where
     T: strum::IntoEnumIterator + AsRef<str> + PartialEq + 'static,
