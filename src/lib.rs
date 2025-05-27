@@ -15,33 +15,36 @@
 //! use enum_toggles::EnumToggles;
 //! use strum_macros::{AsRefStr, EnumIter};
 //!
-//! #[derive(AsRefStr, EnumIter, PartialEq, Copy, Clone, Debug)]
-//! pub enum MyToggle {
+//! #[derive(AsRefStr, EnumIter, PartialEq)]
+//! enum MyToggle {
 //!     FeatureA,
 //!     FeatureB,
 //! }
 //!
-//! let mut toggles = EnumToggles::<MyToggle>::new();
-//! toggles.set_enum(MyToggle::FeatureA, true);
+//! let mut toggles: EnumToggles::<MyToggle> = EnumToggles::new();
+//! toggles.set(MyToggle::FeatureA as usize, true);
 //! toggles.set_by_name("FeatureB", true); // Mapped to MyToggle::FeatureB
-//! toggles.load_from_file("toggles.txt"); // Load toggles state from file
+//! // toggles.load_from_file("toggles.txt"); // Load toggles state from file
 //! println!("{}", toggles);
 //! ```
 //!
 //! - With concucrency context
 //! ```rust
+//! use enum_toggles::EnumToggles;
+//! use log::warn;
 //! use once_cell::sync::Lazy;
 //! use std::env;
-//! use log::{warn};
+//! use std::ops::Deref;
+//! use strum_macros::{AsRefStr, EnumIter};
 //!
-//! #[derive(AsRefStr, EnumIter, PartialEq, Copy, Clone, Debug)]
-//! pub enum MyToggle {
+//! #[derive(AsRefStr, EnumIter, PartialEq)]
+//! enum MyToggle {
 //!     FeatureA,
 //!     FeatureB,
 //! }
 //!
-//! pub static TOGGLES: Lazy<Toggles<EnumToggle>> = Lazy::new(|| {
-//!     let mut toggle = Toggles::new();
+//! pub static TOGGLES: Lazy<EnumToggles<MyToggle>> = Lazy::new(|| {
+//!     let mut toggle:EnumToggles<MyToggle> = EnumToggles::new();
 //!     let filepath = env::var("TOGGLES_FILE");
 //!     match filepath {
 //!         Ok(path) => {
@@ -53,6 +56,8 @@
 //!     }
 //!     toggle
 //! });
+//!
+//! println!("{}", TOGGLES.deref());
 //! ```
 //!
 
@@ -134,7 +139,7 @@ where
     /// Set the bool value of a toggle by its name.
     ///
     /// This operation is *O*(*n*).
-    fn set_by_name(&mut self, toggle_name: &str, value: bool) {
+    pub fn set_by_name(&mut self, toggle_name: &str, value: bool) {
         if let Some(toggle) = T::iter().find(|t| toggle_name == t.as_ref()) {
             if let Some(toggle_id) = T::iter().position(|x| x == toggle) {
                 self.set(toggle_id, value);
@@ -177,12 +182,19 @@ where
 mod tests {
     use super::*;
     use std::io::Write;
+    use strum::IntoEnumIterator;
     use strum_macros::{AsRefStr, EnumIter};
 
     #[derive(AsRefStr, EnumIter, PartialEq)]
     pub enum TestToggles {
         Toggle1,
         Toggle2,
+    }
+
+    #[test]
+    fn default() {
+        let toggles: EnumToggles<TestToggles> = EnumToggles::default();
+        assert_eq!(toggles.toggles_value.len(), TestToggles::iter().count());
     }
 
     #[test]

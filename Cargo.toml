@@ -1,6 +1,6 @@
 [package]
 name = "enum-toggles"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["Jxtopher"]
 description = "A generic Rust library for managing toggles/flags using enums and bitvec."
@@ -17,8 +17,9 @@ crate-type = ["lib"]
 [dependencies]
 bitvec = "1.0"
 log = "0.4"
-strum = "0.26"
-strum_macros = "0.26"
+strum = "0.27.1"
+strum_macros = "0.27.1"
 
 [dev-dependencies]
+once_cell = "1.21.3"
 tempfile = "3.10"
