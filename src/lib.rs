@@ -211,6 +211,8 @@ mod tests {
         assert_eq!(toggles.get(TestToggles::Toggle1 as usize), false);
         toggles.set_by_name("Toggle1", true);
         assert_eq!(toggles.get(TestToggles::Toggle1 as usize), true);
+
+        toggles.set_by_name("Undefined_Toggle", true);
     }
 
     #[test]

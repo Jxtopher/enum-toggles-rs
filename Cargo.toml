@@ -1,6 +1,6 @@
 [package]
-name = "enum-toggles"
-version = "0.1.3"
+name = "enum_toggles"
+version = "0.1.4"
 edition = "2021"
 authors = ["Jxtopher"]
 description = "A generic Rust library for managing toggles/flags using enums and bitvec."
