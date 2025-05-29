@@ -9,7 +9,7 @@
             "@semantic-release/exec",
             {
                 "prepareCmd": "cargo release version ${nextRelease.version} --execute --no-confirm",
-                "publishCmd": "cargo publish --dry-run"
+                "publishCmd": "cargo publish"
             }
         ],
         [
