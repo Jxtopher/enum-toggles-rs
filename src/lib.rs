@@ -151,6 +151,13 @@ where
     ///
     /// This operation is *O*(*1*).
     pub fn set(&mut self, toggle_id: usize, value: bool) {
+        if toggle_id >= self.toggles_value.len() {
+            panic!(
+                "Out-of-bounds access. The provided toggle_id is {}, but the array size is {}. Please use the default enum value.",
+                toggle_id,
+                self.toggles_value.len()
+            );
+        }
         self.toggles_value.set(toggle_id, value);
     }
 
@@ -171,7 +178,7 @@ where
         for toggle in T::iter() {
             if let Some(toggle_id) = T::iter().position(|x| x == toggle) {
                 let name = toggle.as_ref();
-                writeln!(f, "{} {} ", self.toggles_value[toggle_id] as u8, name)?;
+                writeln!(f, "{} {} ", self.get(toggle_id) as u8, name)?;
             }
         }
         Ok(())
@@ -244,5 +251,20 @@ mod tests {
         // Verify that the toggles were set correctly
         assert_eq!(toggles.get(TestToggles::Toggle1 as usize), true);
         assert_eq!(toggles.get(TestToggles::Toggle2 as usize), false);
+    }
+
+    #[derive(AsRefStr, EnumIter, PartialEq)]
+    pub enum DeviantToggles {
+        Toggle1 = 5,
+        Toggle2 = 10,
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Out-of-bounds access. The provided toggle_id is 5, but the array size is 2. Please use the default enum value."
+    )]
+    fn deviant_toggles() {
+        let mut toggles: EnumToggles<DeviantToggles> = EnumToggles::new();
+        toggles.set(DeviantToggles::Toggle1 as usize, true);
     }
 }
