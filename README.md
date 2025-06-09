@@ -22,11 +22,11 @@ There's a direct relationship where each string name corresponds to a unique nam
 cargo add enum-toggles strum strum_macros
 ```
 
-- File `toggles.txt` conains:
+- File `toggles.yaml` conains:
 
-```txt
-0 FeatureA
-1 FeatureB
+```yaml
+FeatureA: 0
+FeatureB: 1
 ```
 
 ```rust
@@ -42,8 +42,8 @@ enum MyToggle {
 let mut toggles: EnumToggles::<MyToggle> = EnumToggles::new();
 toggles.set(MyToggle::FeatureA as usize, true);
 toggles.set_by_name("FeatureB", true); // Mapped to MyToggle::FeatureB
-// toggles.load_from_file("toggles.txt"); // Load toggles state from file
-println!("{}", toggles);
+// toggles.load_from_file("toggles.yaml"); // Load toggles state from file
+println!("{:?}", toggles);
 ```
 
 ### Example 2: With concucrency context
@@ -76,5 +76,5 @@ pub static TOGGLES: Lazy<EnumToggles<MyToggle>> = Lazy::new(|| {
     toggle
 });
 
-println!("{}", TOGGLES.deref());
+println!("{:?}", TOGGLES.deref());
 ```

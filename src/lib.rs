@@ -4,10 +4,10 @@
 //!
 //! # Example
 //!
-//! - File `toggles.txt` conains:
-//! ```txt
-//! 0 FeatureA
-//! 1 FeatureB
+//! - File `toggles.yaml` conains:
+//! ```yaml
+//! FeatureA: 0
+//! FeatureB: 1
 //! ```
 //!
 //! - Basic usage
@@ -24,8 +24,8 @@
 //! let mut toggles: EnumToggles::<MyToggle> = EnumToggles::new();
 //! toggles.set(MyToggle::FeatureA as usize, true);
 //! toggles.set_by_name("FeatureB", true); // Mapped to MyToggle::FeatureB
-//! // toggles.load_from_file("toggles.txt"); // Load toggles state from file
-//! println!("{}", toggles);
+//! // toggles.load_from_file("toggles.yaml"); // Load toggles state from file
+//! println!("{:?}", toggles);
 //! ```
 //!
 //! - With concucrency context
@@ -57,14 +57,14 @@
 //!     toggle
 //! });
 //!
-//! println!("{}", TOGGLES.deref());
+//! println!("{:?}", TOGGLES.deref());
 //! ```
 //!
 
 use bitvec::prelude::*;
-use log::error;
-use std::io::BufRead;
+use std::fs;
 use std::{collections::HashMap, fmt};
+use yaml_rust::{Yaml, YamlLoader};
 
 /// Contains the toggle value for each item of the enum T.
 pub struct EnumToggles<T> {
@@ -101,24 +101,23 @@ where
         toggles
     }
 
-    /// Set all toggles value defiend in the file.
+    /// Set all toggles value defiend in the yaml file.
     pub fn load_from_file(&mut self, filepath: &str) {
-        let file = std::fs::File::open(filepath).expect("Unable to open file");
-        let reader = std::io::BufReader::new(file);
-        for line in reader.lines() {
-            match line {
-                Ok(line) => {
-                    let parts: Vec<&str> = line.split_whitespace().collect();
-                    if parts.len() == 2 {
-                        if let Ok(value) = parts[0].parse::<u8>() {
-                            self.set_by_name(parts[1], value != 0);
-                        }
+        match fs::read_to_string(filepath) {
+            Ok(content) => {
+                let docs = YamlLoader::load_from_str(&content).unwrap();
+                let doc = &docs[0];
+
+                if let Yaml::Hash(ref h) = doc {
+                    for (key, value) in h {
+                        self.set_by_name(
+                            key.as_str().unwrap_or("<non-string>"),
+                            value.as_i64().unwrap_or(0) == 1,
+                        );
                     }
                 }
-                Err(e) => {
-                    error!("Error reading line: {e}");
-                }
             }
+            Err(e) => println!("Error reading file: {}", e),
         }
     }
 
@@ -170,7 +169,7 @@ where
 }
 
 /// Diplay all toggles and their values.
-impl<T> fmt::Display for EnumToggles<T>
+impl<T> fmt::Debug for EnumToggles<T>
 where
     T: strum::IntoEnumIterator + AsRef<str> + PartialEq + 'static,
 {
@@ -225,7 +224,7 @@ mod tests {
     #[test]
     fn display() {
         let toggles: EnumToggles<TestToggles> = EnumToggles::new();
-        assert_eq!(format!("{}", toggles).is_empty(), false);
+        assert_eq!(format!("{:?}", toggles).is_empty(), false);
     }
 
     #[test]
@@ -235,10 +234,9 @@ mod tests {
             tempfile::NamedTempFile::new().expect("Unable to create temporary file");
 
         // Write some data to the file
-        writeln!(temp_file, "1 Toggle1").expect("Unable to write to temporary file");
-        writeln!(temp_file, "0 Toggle2").expect("Unable to write to temporary file");
-        writeln!(temp_file, "0 VAR1").expect("Unable to write to temporary file");
-        writeln!(temp_file, "TESTTEST").expect("Unable to write to temporary file");
+        writeln!(temp_file, "Toggle1: 1").expect("Unable to write to temporary file");
+        writeln!(temp_file, "Toggle2: 0").expect("Unable to write to temporary file");
+        writeln!(temp_file, "VAR1: 0").expect("Unable to write to temporary file");
         writeln!(temp_file, "").expect("Unable to write to temporary file");
 
         // Get the path of the temporary file
