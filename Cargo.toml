@@ -19,6 +19,7 @@ bitvec = "1.0"
 log = "0.4"
 strum = "0.27.1"
 strum_macros = "0.27.1"
+yaml-rust = "0.4.5"
 
 [dev-dependencies]
 criterion = { version = "0.6", features = ["html_reports"] }
