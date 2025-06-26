@@ -32,9 +32,9 @@
 //! ```rust
 //! use enum_toggles::EnumToggles;
 //! use log::warn;
-//! use once_cell::sync::Lazy;
 //! use std::env;
 //! use std::ops::Deref;
+//! use std::sync::LazyLock;
 //! use strum_macros::{AsRefStr, EnumIter};
 //!
 //! #[derive(AsRefStr, EnumIter, PartialEq)]
@@ -43,7 +43,7 @@
 //!     FeatureB,
 //! }
 //!
-//! pub static TOGGLES: Lazy<EnumToggles<MyToggle>> = Lazy::new(|| {
+//! pub static TOGGLES: LazyLock<EnumToggles<MyToggle>> = LazyLock::new(|| {
 //!     let mut toggle:EnumToggles<MyToggle> = EnumToggles::new();
 //!     let filepath = env::var("TOGGLES_FILE");
 //!     match filepath {
@@ -198,13 +198,13 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn test_default() {
         let toggles: EnumToggles<TestToggles> = EnumToggles::default();
         assert_eq!(toggles.toggles_value.len(), TestToggles::iter().count());
     }
 
     #[test]
-    fn set_all() {
+    fn test_set_all() {
         let mut toggles: EnumToggles<TestToggles> = EnumToggles::new();
         toggles.set_all(HashMap::from([("Toggle1".to_string(), true)]));
         assert_eq!(toggles.get(TestToggles::Toggle1 as usize), true);
@@ -212,7 +212,7 @@ mod tests {
     }
 
     #[test]
-    fn set_by_name() {
+    fn test_set_by_name() {
         let mut toggles: EnumToggles<TestToggles> = EnumToggles::new();
         assert_eq!(toggles.get(TestToggles::Toggle1 as usize), false);
         toggles.set_by_name("Toggle1", true);
@@ -222,13 +222,13 @@ mod tests {
     }
 
     #[test]
-    fn display() {
+    fn test_display() {
         let toggles: EnumToggles<TestToggles> = EnumToggles::new();
         assert_eq!(format!("{:?}", toggles).is_empty(), false);
     }
 
     #[test]
-    fn load_from_file() {
+    fn test_load_from_file() {
         // Create a temporary file
         let mut temp_file =
             tempfile::NamedTempFile::new().expect("Unable to create temporary file");
@@ -261,7 +261,7 @@ mod tests {
     #[should_panic(
         expected = "Out-of-bounds access. The provided toggle_id is 5, but the array size is 2. Please use the default enum value."
     )]
-    fn deviant_toggles() {
+    fn test_deviant_toggles() {
         let mut toggles: EnumToggles<DeviantToggles> = EnumToggles::new();
         toggles.set(DeviantToggles::Toggle1 as usize, true);
     }
