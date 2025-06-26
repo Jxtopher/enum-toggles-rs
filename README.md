@@ -51,9 +51,9 @@ println!("{:?}", toggles);
 ```rust
 use enum_toggles::EnumToggles;
 use log::warn;
-use once_cell::sync::Lazy;
 use std::env;
 use std::ops::Deref;
+use std::sync::LazyLock;
 use strum_macros::{AsRefStr, EnumIter};
 
 #[derive(AsRefStr, EnumIter, PartialEq)]
@@ -62,7 +62,7 @@ enum MyToggle {
     FeatureB,
 }
 
-pub static TOGGLES: Lazy<EnumToggles<MyToggle>> = Lazy::new(|| {
+pub static TOGGLES: LazyLock<EnumToggles<MyToggle>> = LazyLock::new(|| {
     let mut toggle:EnumToggles<MyToggle> = EnumToggles::new();
     let filepath = env::var("TOGGLES_FILE");
     match filepath {

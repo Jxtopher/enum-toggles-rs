@@ -20,11 +20,11 @@ fn enum_toggles(toggles: &EnumToggles<TestToggles>) {
     black_box(toggles.get(TestToggles::Spades as usize));
 }
 
-fn map_toggles(hash_map_toggles: &HashMap<&'static str, bool>) {
-    black_box(hash_map_toggles.get("Hearts"));
-    black_box(hash_map_toggles.get("Tiles"));
-    black_box(hash_map_toggles.get("Pikes"));
-    black_box(hash_map_toggles.get("Spades"));
+fn list_toggles(list_toggles_value: &Vec<bool>) {
+    black_box(list_toggles_value[TestToggles::Hearts as usize]);
+    black_box(list_toggles_value[TestToggles::Tiles as usize]);
+    black_box(list_toggles_value[TestToggles::Pikes as usize]);
+    black_box(list_toggles_value[TestToggles::Spades as usize]);
 }
 
 fn compare_methods(c: &mut Criterion) {
@@ -38,6 +38,8 @@ fn compare_methods(c: &mut Criterion) {
     hash_map_toggles.insert("Pikes", false);
     hash_map_toggles.insert("Spades", false);
 
+    let list_toggles_value: Vec<bool> = vec![false; 4];
+
     group.bench_with_input(
         BenchmarkId::new("Readonly-toggles", "enum_toggles"),
         &toggles,
@@ -45,9 +47,9 @@ fn compare_methods(c: &mut Criterion) {
     );
 
     group.bench_with_input(
-        BenchmarkId::new("Readonly-toggles", "HashMap"),
-        &hash_map_toggles,
-        |b, input| b.iter(|| map_toggles(black_box(input))),
+        BenchmarkId::new("Readonly-toggles", "List"),
+        &list_toggles_value,
+        |b, input| b.iter(|| list_toggles(black_box(input))),
     );
 
     group.finish();
