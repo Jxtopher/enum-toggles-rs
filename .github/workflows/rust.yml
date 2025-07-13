@@ -46,10 +46,10 @@ jobs:
         # rustup component add llvm-tools-preview --toolchain stable-x86_64-unknown-linux-gnu
         cargo llvm-cov
 
-    # - name: Install Miri
-    #   run: |
-    #     rustup toolchain install nightly --component miri
-    #     rustup override set nightly
-    #     cargo miri setup
-    # - name: Test with Miri
-    #   run: cargo miri test
+    - name: Install Miri
+      run: |
+        rustup toolchain install nightly --component miri
+        rustup override set nightly
+        cargo miri setup
+    - name: Test with Miri
+      run: cargo miri test

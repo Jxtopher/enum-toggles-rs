@@ -117,7 +117,7 @@ where
                     }
                 }
             }
-            Err(e) => println!("Error reading file: {}", e),
+            Err(e) => println!("Error reading file: {e}"),
         }
     }
 
