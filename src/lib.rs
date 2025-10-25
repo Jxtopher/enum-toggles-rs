@@ -49,7 +49,7 @@
 //!     match filepath {
 //!         Ok(path) => {
 //!             if !path.is_empty() {
-//!                 toggle.load_from_file(&path)
+//!                 toggle.load_from_file(&path);
 //!             }
 //!         }
 //!         Err(_) => warn!("Environment variable TOGGLES_FILE not set"),
@@ -102,25 +102,22 @@ where
     }
 
     /// Set all toggles value defiend in the yaml file.
-    pub fn load_from_file(&mut self, filepath: &str) {
-        match fs::read_to_string(filepath) {
-            Ok(content) => {
-                let docs = YamlLoader::load_from_str(&content).unwrap();
-                let doc = &docs[0];
+    pub fn load_from_file(&mut self, filepath: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let content = fs::read_to_string(filepath)?;
+        let docs = YamlLoader::load_from_str(&content)?;
+        let doc = &docs[0];
 
-                if let Yaml::Hash(ref h) = doc {
-                    for (key, value) in h {
-                        self.set_by_name(
-                            key.as_str().unwrap_or("<non-string>"),
-                            value.as_i64().unwrap_or(0) == 1,
-                        );
-                    }
-                }
+        if let Yaml::Hash(ref h) = doc {
+            for (key, value) in h {
+                self.set_by_name(
+                    key.as_str().ok_or("Invalid key: not a string")?,
+                    value.as_i64().ok_or("Invalid value: not an integer")? == 1,
+                );
             }
-            Err(e) => println!("Error reading file: {}", e),
         }
-    }
 
+        Ok(())
+    }
     /// Set the bool value of all toggles based on a HashMap.
     ///
     /// This operation is *O*(*n²*).
@@ -244,7 +241,7 @@ mod tests {
 
         // Create a Toggles instance and load from the file
         let mut toggles: EnumToggles<TestToggles> = EnumToggles::new();
-        toggles.load_from_file(filepath);
+        let _ = toggles.load_from_file(filepath);
 
         // Verify that the toggles were set correctly
         assert_eq!(toggles.get(TestToggles::Toggle1 as usize), true);
