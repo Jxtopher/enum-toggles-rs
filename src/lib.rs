@@ -64,7 +64,7 @@
 use bitvec::prelude::*;
 use std::fs;
 use std::{collections::HashMap, fmt};
-use yaml_rust::{Yaml, YamlLoader};
+use yaml_rust2::{Yaml, YamlLoader};
 
 /// Contains the toggle value for each item of the enum T.
 pub struct EnumToggles<T> {
